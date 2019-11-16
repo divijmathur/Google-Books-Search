@@ -39,13 +39,17 @@ app.get("/", (req,res) => {
     });
 })
 
+
+
 app.post("/getBookInfo", (req, res) => {
     let book = req.body.book
+    console.log(book)
     request('https://www.googleapis.com/books/v1/volumes?q=' + book, function (error, response, body) {
         if (error) {
             console.log(error)
+            res.json({error: true})
         } else {
-            console.log(response);
+            res.json(JSON.parse(body))
         }
     });
 })
