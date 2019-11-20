@@ -29,7 +29,7 @@ app.use(function (req, res, next) {
     next();
 });
 
-app.get("/", (req,res) => {
+app.get("/", (req, res) => {
     request('https://www.googleapis.com/books/v1/volumes?q=1984', function (error, response, body) {
         if (error) {
             console.log(error)
@@ -47,15 +47,45 @@ app.post("/getBookInfo", (req, res) => {
     request('https://www.googleapis.com/books/v1/volumes?q=' + book, function (error, response, body) {
         if (error) {
             console.log(error)
-            res.json({error: true})
+            res.json({ error: true })
         } else {
             res.json(JSON.parse(body))
         }
     });
 })
 
-app.post('/jokes', function (req, res) {
-    var valid = true;
+app.post('/books', function (req, res) {
+    let book = req.body.book
+    console.log(book)
+    request('https://www.googleapis.com/books/v1/volumes?q=' + book, function (error, response, body) {
+        if (error) {
+            console.log(error)
+            res.json({ success: false })
+            return
+        }
+        const items = JSON.parse(body).items
+        for (let i = 0; i < items.length; i++) {
+
+            const book = {
+                description: items[i].searchInfo.textSnippet,
+                title: items[i].volumeInfo.title,
+                authors: items[i].volumeInfo.authors,
+                image: items[i].volumeInfo.imageLinks.thumbnail,
+                link: items[i].saleInfo.buyLink
+            }
+            db.books.insert(book, function (error, savedBooks) {
+                // handle error
+                if (i === items.length - 1) {
+                    res.json({
+                        succes: true,
+                        data: items
+                    })
+                }
+            });
+        }
+        // res.json(JSON.parse(body))
+    });
+    // var valid = true;
     //validation first
     // var valid = false;
 
@@ -65,20 +95,20 @@ app.post('/jokes', function (req, res) {
 
     // valid = isOnlyOneKey && onlyNameKey && isLessThan1000Chars;
 
-    if (valid) {
-        db.jokes.insert(req.body, function (error, savedJoke) {
-            // Log any errors
-            if (error) {
-                res.send(error);
-            } else {
-                res.json(savedJoke);
-            }
-        });
-    } else {
-        res.json({
-            error: 'data was not valid'
-        })
-    }
+    // if (valid) {
+    //     db.books.insert(req.body, function (error, savedJoke) {
+    //         // Log any errors
+    //         if (error) {
+    //             res.send(error);
+    //         } else {
+    //             res.json(savedJoke);
+    //         }
+    //     });
+    // } else {
+    //     res.json({
+    //         error: 'data was not valid'
+    //     })
+    // }
 });
 
 app.get('/jokes/:id', function (req, res) {
